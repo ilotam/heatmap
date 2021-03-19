@@ -17,3 +17,8 @@ In order to use this chart you will need to have a data source that has a Date c
 
 ![image](https://user-images.githubusercontent.com/47331711/109513271-36a66880-7aa5-11eb-8093-e9ebeeec511a.png)
 
+# Logo
+
+![heatmap_logo](https://user-images.githubusercontent.com/47331711/111767313-dd14ab00-88a6-11eb-952e-1167c5910dad.png)
+
+
