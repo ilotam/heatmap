@@ -4,7 +4,7 @@ const local = require('./localMessage.js');
 
 // change this to 'true' for local development
 // change this to 'false' before deploying
-export const LOCAL = true;
+export const LOCAL = false;
 
 function split_at_index_first(value, index)
 {
@@ -18,7 +18,11 @@ function getSize(numberofFields){
    return 390/(numberofFields);
 }
 
-
+String.prototype.removeCharAt = function (i) {
+    var tmp = this.split(''); // convert to an array
+    tmp.splice(i - 1 , 1); // remove 1 element from the array (adjusting for non-zero-indexed counts)
+    return tmp.join(''); // reconstruct the string
+}
 
 // parse the style value
 const styleVal = (message, styleId) => {
@@ -31,7 +35,6 @@ const styleVal = (message, styleId) => {
       ? message.style[styleId].value
       : message.style[styleId].defaultValue;
 };
-  
 
 const drawViz = message => {
   
@@ -63,20 +66,25 @@ const drawViz = message => {
     var rangeFrom= styleVal(message, "colorFrom");
     var rangeTo = styleVal(message, "colorTo");
     var helper= 0;
-    
+    var properDate;
+
     tblList.forEach(function(row) {
-        dateTable.push( split_at_index_first( row["dimension"][0], 8));
-        hourTable.push( split_at_index_first(split_at_index_last( row["dimension"][0], 8),2));
+
+        properDate = (split_at_index_first(row["dimension"][0], 19))
+                .removeCharAt(5).removeCharAt(7).removeCharAt(9).removeCharAt(11).removeCharAt(13);
+        //console.log(properDate);
+        dateTable.push( split_at_index_first(properDate, 8));
+        hourTable.push( split_at_index_first(split_at_index_last( properDate, 8),2));
         valueTable.push( row["metric"][0]);
-        combinedTable.push(row["dimension"][0]);
-        notSortedCombinedTable.push(row["dimension"][0]);
+        combinedTable.push(properDate);
+        notSortedCombinedTable.push(properDate);
         numberofFields++;
        // console.log(row["dimension"][0]);
     });
     
-    console.log(dateTable);
-    console.log(hourTable);
-    console.log(combinedTable);
+    //console.log(dateTable);
+    //console.log(hourTable);
+    //console.log(combinedTable);
     uniquedateTable.push(dateTable[0]);
     for (var i = 0; i < dateTable.length; i++) {
         //console.log(dateTable[i]);
@@ -92,7 +100,7 @@ const drawViz = message => {
             exsists=0;
         }
     }
-    console.log(uniquedateTable);
+    //console.log(uniquedateTable);
 
     uniquehourTable.push(hourTable[0]);
     for (var i = 0; i < hourTable.length; i++) {
@@ -109,22 +117,15 @@ const drawViz = message => {
             exsists=0;
         }
     }
-    console.log(uniquehourTable);
+    //console.log(uniquedateTable);
 
-    //numberofFields = uniquedateTable.length * uniquehourTable.length;
-    console.log(numberofFields);
-   
-    // var sequential= d3.scaleSequential( 
-    //     function(t) { 
-    //         return d3.rgb(2 , t*1.5, 0.8); 
-    //     } 
-    // ) 
+    //console.log(numberofFields);
 
     var color = d3.scaleLinear()
     .domain([valueTable[valueTable.length-1], valueTable[0]])
     .range([rangeFrom, rangeTo]);
 
-//console.log(valueTable[valueTable.length-1]);
+    //console.log(color(35));
     for(var i = 1; i < uniquedateTable.length; i++){
        if(parseInt(uniquedateTable[i]) < parseInt(uniquedateTable[i-1])){
            helper = uniquedateTable[i-1]; 
@@ -147,12 +148,7 @@ const drawViz = message => {
         }
     }
 
-   console.log(uniquehourTable);
-
-
-
-  
-    
+   //console.log(uniquehourTable); 
     for(var i = 1; i < combinedTable.length; i++){
         
         if(parseInt(combinedTable[i]) < parseInt(combinedTable[i-1])){
@@ -165,9 +161,9 @@ const drawViz = message => {
         }
     }
  
-    console.log("combinedTable: " +combinedTable);
-    console.log("notSortedCombinedTable: " +notSortedCombinedTable);
-    console.log("valueTable: " +valueTable);
+    //console.log("combinedTable: " +combinedTable);
+    //console.log("notSortedCombinedTable: " +notSortedCombinedTable);
+    //console.log("valueTable: " +valueTable);
 
     for(var i = 0; i < combinedTable.length; i++){
         for(var j = 0; j < notSortedCombinedTable.length; j++){
@@ -176,43 +172,35 @@ const drawViz = message => {
             }
         }
     }
-    console.log("goodvalueTable: " + goodvalueTable);
+    //console.log("goodvalueTable: " + goodvalueTable);
 
 
    //console.log(uniquedateTable.length);
-   console.log("numberofField: " + numberofFields);
+   //console.log("numberofField: " + numberofFields);
     var valueCount = 0;                    
     for(var i = 0; i < uniquedateTable.length;i++){
         
         for(var j = 0; j < uniquehourTable.length; j++){
 
             if(valueCount < numberofFields){
-
             
             svgContainer
-            
             .data(valueTable)
-        
             .append("rect")
-            .attr("x", 20 + i*getSize(uniquedateTable.length))
-            .attr("y", 20 + j*getSize(uniquedateTable.length))
-            .attr("width", getSize(uniquedateTable.length)-5)
-            .attr("height", getSize(uniquedateTable.length)-5)
+            .attr("x", 20 + i*getSize(uniquedateTable.length >= uniquehourTable.length ? uniquedateTable.length : uniquehourTable.length))
+            .attr("y", 20 + j*getSize(uniquedateTable.length >= uniquehourTable.length ? uniquedateTable.length : uniquehourTable.length))
+            .attr("width", getSize(uniquedateTable.length >= uniquehourTable.length ? uniquedateTable.length : uniquehourTable.length)-5)
+            .attr("height", getSize(uniquedateTable.length >= uniquehourTable.length ? uniquedateTable.length : uniquehourTable.length)-5)
             .style('fill', color(goodvalueTable[valueCount]))
-            // .style('fill', function(d) {
-            //     console.log(sequential(valueTable[valueCount]));
-            //     return sequential(valueTable[valueCount]);
-            // });
             valueCount++;
             }
 
         }
     }
-
+    //console.log((styleVal(message, "showLabels")));
     if(styleVal(message, "showLabels")){
-
     
-        for(var i = 0; i < Math.sqrt(numberofFields);i++){
+        for(var i = 0; i <(uniquedateTable.length);i++){
             svgContainer.append("text")
                     .attr("x",20 + i*getSize(uniquedateTable.length))
                     .attr("y",10)
@@ -220,14 +208,14 @@ const drawViz = message => {
                     .attr("font-size",10)
                     .attr("text-anchor", "right") 
                     .style("color", "black")      
-                    .text(uniquedateTable[i]);
+                    .text(split_at_index_last( uniquedateTable[i], 6));
         }
 
 
-        for(var i = 0; i < Math.sqrt(numberofFields);i++){
+        for(var i = 0; i < uniquehourTable.length;i++){
         svgContainer.append("text")
                     .attr("x",2)
-                    .attr("y",30 + i*getSize(uniquedateTable.length))
+                    .attr("y",27 + i*getSize(uniquedateTable.length))
                     .attr("font-family",styleVal(message, "fontFamily"))
                     .attr("font-size",10)
                     .attr("text-anchor", "right") 
@@ -236,16 +224,10 @@ const drawViz = message => {
         }
     }
 
-   
     d3.select("text").raise(); 
-
-   
 
 //hex codes: green: #2e9f8d
 //grey: #d2d8d6
-
-    
-
 };
 // renders locally
 if (LOCAL) {

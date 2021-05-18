@@ -57,6 +57,7 @@
           "label": "Show Labels",
           "type": "CHECKBOX",
           "defaultValue": "true"
+          
         },
         {
           "id": "fontFamily",
